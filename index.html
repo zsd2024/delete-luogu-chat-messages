@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+	<title>洛谷聊天记录删除工具</title><!-- 标题 -->
+	<meta charset="UTF-8"><!-- 编码 -->
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"><!-- 视口 -->
+	<script src="https://cdn.staticfile.org/clipboard.js/2.0.4/clipboard.min.js">// 引入clipboard.js</script>
+</head>
+
+<body>
+	<h1>洛谷聊天记录删除工具</h1><!-- 标题 -->
+	<p>请在下方填入变量，再点击“获取代码”按钮获取删除代码。</p><!-- 说明 -->
+	<form>
+		<label for="userId">要删除消息的用户ID，例如对于主页为<a
+				href="https://www.luogu.com.cn/user/1">https://www.luogu.com.cn/user/1</a>的用户，其UID为1，则填入1即可：</label><!-- 一个输入框：用户UID -->
+		<input type="number" id="userId" name="userId" required min="1" max="1000000000" placeholder="请输入用户ID"><br>
+		<label for="quiet">是否静默模式，静默模式下提示较少：</label><!-- 一个复选框：静默模式 -->
+		<input type="checkbox" id="quiet" name="quiet"><br>
+		<label for="sleep_time">两次请求之间的间隔时间，默认3000ms，即3秒，建议不要太短，以免触发限制，单位ms：</label><!-- 一个输入框：间隔时间 -->
+		<input type="number" id="sleep_time" name="sleep_time" value="3000" required min="1000" max="10000"
+			placeholder="请输入间隔时间"><br>
+		<button type="button" id="copyButton" onclick="copyCode()">获取代码并复制到剪贴板</button><!-- 一个按钮：获取代码 -->
+	</form>
+	<pre id="code"></pre><!-- 一个输出框：代码输出 -->
+	<script>
+		function getDeleteCode() {
+			var userId = document.getElementById("userId").value;
+			var quiet = document.getElementById("quiet").checked;
+			var sleepTime = document.getElementById("sleep_time").value;
+			if (userId === "") { // 用户ID不能为空
+				alert("用户ID不能为空！");
+				return;
+			}
+			else if (isNaN(userId) || userId < 1 || userId > 1000000000) { // 用户ID必须为数字且在1到1000000000之间
+				alert("用户ID必须为数字且在1到1000000000之间！");
+				return;
+			}
+			else if (isNaN(sleepTime) || sleepTime < 1000 || sleepTime > 10000) { // 间隔时间必须为数字且在1000到10000之间
+				alert("间隔时间必须为数字且在1000到10000之间！");
+				return;
+			}
+			var checkedStr = quiet ? "true" : "false"; // 转换为字符串
+			var year = new Date().getFullYear(); // 获取当前年份
+
+			var code =
+				`/*
+MIT License
+
+Copyright (c) ${year} zsd2024
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+/*本代码由洛谷聊天记录删除工具生成，请勿修改
+zsd2024 保留所有权利。*/
+userId = ${userId}; // 这里填入要删除消息的用户ID
+quiet = ${checkedStr}; // 是否静默模式，静默模式下提示较少，默认false
+sleep_time = ${sleepTime}; // 两次请求之间的间隔时间，默认3000ms，即3秒，建议不要太短，以免触发限制
+
+// 请勿修改以下代码，除非你知道你在做什么
+
+function getCsrfToken() { // 定义一个获取CSRF令牌的函数
+	return document.querySelector('meta[name="csrf-token"]').content; // 从meta标签中获取CSRF令牌
+}
+
+const sleep = (delay) => new Promise((resolve) => setTimeout(resolve, delay)); // 定义一个异步的sleep函数，用于延迟执行
+
+async function deleteMessageById(id) { // 定义一个异步函数，用于删除指定ID的消息
+	try {
+		const response = await fetch("https://www.luogu.com.cn/api/chat/delete", { // 发送删除消息的请求
+			"headers": {
+				"accept": "application/json, text/plain, */*", // 接受所有类型的响应
+				"accept-language": "zh-CN,zh;q=0.9", // 接受中文语言的响应
+				"content-type": "application/json", // 请求内容类型为JSON
+				"priority": "u=1, i", // 优先级设置
+				"sec-ch-ua": "\\"Not)A;Brand\\";v=\\"99\\", \\"Microsoft Edge\\";v=\\"127\\", \\"Chromium\\";v=\\"127\\"", // 用户代理信息
+				"sec-ch-ua-mobile": "?0", // 是否为移动设备
+				"sec-ch-ua-platform": "\\"Windows\\"", // 操作系统信息
+				"sec-fetch-dest": "empty", // fetch请求的目标
+				"sec-fetch-mode": "cors", // fetch请求的模式
+				"sec-fetch-site": "same-origin", // fetch请求的站点
+				"x-csrf-token": getCsrfToken(), // CSRF令牌
+				"x-requested-with": "XMLHttpRequest" // 请求类型
+			},
+			"referrer": "https://www.luogu.com.cn/chat", // 请求来源
+			"referrerPolicy": "strict-origin-when-cross-origin", // 来源策略
+			"body": JSON.stringify({ id }), // 请求体，包含要删除的消息ID
+			"method": "POST", // 请求方法
+			"mode": "cors", // 请求模式
+			"credentials": "include" // 包含凭证信息
+		});
+		const data = await response.json(); // 解析响应为JSON格式
+		return data; // 返回解析后的数据
+	} catch (error) {
+		console.error("删除消息失败：", error); // 捕获并输出删除消息失败的信息
+	}
+}
+
+async function deleteMessagesByData(data) { // 定义一个异步函数，用于删除一组消息
+	try {
+		for (let i = 0; i < data.length; ++i) { // 遍历消息数据
+			const dataItem = data[i]; // 获取当前消息项
+			if (quiet)
+				console.log("正在删除消息：", dataItem["id"]); // 静默模式下，输出正在删除的消息ID
+			else {
+				const time = new Date(dataItem["time"] * 1000);// 时间戳转日期对象，×1000是为了转成毫秒
+				const timeStr = time.getFullYear() + "年" + (time.getMonth() + 1) + "月" + time.getDate() + "日 " + time.getHours() + "时" + time.getMinutes() + "分" + time.getSeconds() + "秒"; // 格式化时间字符串
+				console.warn("正在删除在" + timeStr + "发送的消息：", dataItem["id"], "，内容：", dataItem["content"]); // 输出正在删除的消息ID和内容
+			}
+			await deleteMessageById(dataItem["id"]); // 使用 await 等待删除完成
+			await sleep(sleep_time); // 等待指定时间后继续下一次删除
+		}
+	}
+	catch (error) {
+		console.error("删除消息失败：", error); // 捕获并输出删除消息失败的信息
+	}
+}
+
+async function getMessagesDataByUserIdAndPage(userId, page) { // 定义一个异步函数，用于获取指定用户和页码的消息数据
+	try {
+		const response = await fetch("https://www.luogu.com.cn/api/chat/record?user=" + userId + "&page=" + page, { // 发送获取消息数据的请求
+			"headers": {
+				"accept": "application/json, text/plain, */*", // 接受所有类型的响应
+				"accept-language": "zh-CN,zh;q=0.9", // 接受中文语言的响应
+				"priority": "u=1, i", // 优先级设置
+				"sec-ch-ua": "\\"Not)A;Brand\\";v=\\"99\\", \\"Microsoft Edge\\";v=\\"127\\", \\"Chromium\\";v=\\"127\\"", // 用户代理信息
+				"sec-ch-ua-mobile": "?0", // 是否为移动设备
+				"sec-ch-ua-platform": "\\"Windows\\"", // 操作系统信息
+				"sec-fetch-dest": "empty", // fetch请求的目标
+				"sec-fetch-mode": "cors", // fetch请求的模式
+				"sec-fetch-site": "same-origin", // fetch请求的站点
+				"x-csrf-token": getCsrfToken(), // CSRF令牌
+				"x-requested-with": "XMLHttpRequest" // 请求类型
+			},
+			"referrer": "https://www.luogu.com.cn/chat", // 请求来源
+			"referrerPolicy": "strict-origin-when-cross-origin", // 来源策略
+			"body": null, // 请求体为空
+			"method": "GET", // 请求方法
+			"mode": "cors", // 请求模式
+			"credentials": "include" // 包含凭证信息
+		});
+		const data = await response.json(); // 解析响应为JSON格式
+		return data["messages"]["result"]; // 返回解析后的消息数据
+	}
+	catch (error) {
+		console.error("获取第", page, "页消息数据失败：", error); // 捕获并输出获取消息数据失败的信息
+	}
+}
+
+async function getLastPageDataByUserId(userId) { // 定义一个异步函数，用于获取指定用户的最后一页消息数据
+	try {
+		const response = await fetch("https://www.luogu.com.cn/api/chat/record?user=" + userId, { // 发送获取消息数据的请求
+			"headers": {
+				"accept": "application/json, text/plain, */*", // 接受所有类型的响应
+				"accept-language": "zh-CN,zh;q=0.9", // 接受中文语言的响应
+				"priority": "u=1, i", // 优先级设置
+				"sec-ch-ua": "\\"Not)A;Brand\\";v=\\"99\\", \\"Microsoft Edge\\";v=\\"127\\", \\"Chromium\\";v=\\"127\\"", // 用户代理信息
+				"sec-ch-ua-mobile": "?0", // 是否为移动设备
+				"sec-ch-ua-platform": "\\"Windows\\"", // 操作系统信息
+				"sec-fetch-dest": "empty", // fetch请求的目标
+				"sec-fetch-mode": "cors", // fetch请求的模式
+				"sec-fetch-site": "same-origin", // fetch请求的站点
+				"x-csrf-token": getCsrfToken(), // CSRF令牌
+				"x-requested-with": "XMLHttpRequest" // 请求类型
+			},
+			"referrer": "https://www.luogu.com.cn/chat", // 请求来源
+			"referrerPolicy": "strict-origin-when-cross-origin", // 来源策略
+			"body": null, // 请求体为空
+			"method": "GET", // 请求方法
+			"mode": "cors", // 请求模式
+			"credentials": "include" // 包含凭证信息
+		});
+		const data = await response.json(); // 解析响应为JSON格式
+		return data["messages"]; // 返回解析后的消息数据
+	} catch (error) {
+		console.error("获取第一页消息数据失败：", error); // 捕获并输出获取消息数据失败的信息
+	}
+}
+
+async function getPageCountByData(data) { // 定义一个异步函数，用于获取消息的总页数
+	try {
+		return Math.ceil(data["count"] / data["perPage"]); // 计算并返回消息的总页数
+	} catch (error) {
+		console.error("获取页数失败：", error); // 捕获并输出获取页数失败的信息
+	}
+}
+
+// 使用 async/await 处理异步操作
+(async () => { // 定义一个立即执行的异步函数
+	try {
+		console.log("开始删除用户", userId, "的消息..."); // 输出开始删除消息的提示
+		console.log("获取第一页消息数据..."); // 输出获取第一页消息数据的提示
+		const lastPageData = await getLastPageDataByUserId(userId); // 获取第一页消息数据
+		await sleep(sleep_time); // 等待指定时间后继续下一次删除
+		console.log("获取第一页消息数据成功！"); // 输出获取第一页消息数据成功的提示
+		console.log("获取消息页数..."); // 输出获取消息页数的提示
+		const messagesPageCount = await getPageCountByData(lastPageData); // 获取消息的总页数
+		console.log("获取消息页数成功！"); // 输出获取消息页数成功的提示
+		console.log("消息页数：", messagesPageCount, "页"); // 输出消息的总页数
+		if (messagesPageCount === 0) { // 如果消息页数为0
+			console.log("没有需要删除的消息！"); // 输出没有需要删除的消息的提示
+			return; // 结束函数执行
+		}
+		const timespeend = lastPageData["count"] * sleep_time;// 计算删除消息所需的时间，单位ms
+		let timeStr = ""; // 定义时间字符串变量
+		if (timespeend < 1000) // 如果时间小于1秒
+			timeStr = timespeend + "毫秒";
+		else if (timespeend < 60000) // 如果时间小于1分钟
+		{
+			timeStr = Math.floor(timespeend / 1000) + "秒";
+			timeStr += Math.floor((timespeend % 1000) / 100) + "毫秒";
+		}
+		else if (timespeend < 3600000) // 如果时间小于1小时
+		{
+			timeStr = Math.floor(timespeend / 60000) + "分钟";
+			timeStr += Math.floor((timespeend % 60000) / 1000) + "秒";
+			timeStr += Math.floor((timespeend % 1000) / 100) + "毫秒";
+		}
+		else if (timespeend < 86400000) // 如果时间小于1天
+		{
+			timeStr = Math.floor(timespeend / 3600000) + "小时";
+			timeStr += Math.floor((timespeend % 3600000) / 60000) + "分钟";
+			timeStr += Math.floor((timespeend % 60000) / 1000) + "秒";
+			timeStr += Math.floor((timespeend % 1000) / 100) + "毫秒";
+		}
+		else // 如果时间大于1天
+		{
+			timeStr = Math.floor(timespeend / 86400000) + "天";
+			timeStr += Math.floor((timespeend % 86400000) / 3600000) + "小时";
+			timeStr += Math.floor((timespeend % 3600000) / 60000) + "分钟";
+			timeStr += Math.floor((timespeend % 60000) / 1000) + "秒";
+			timeStr += Math.floor((timespeend % 1000) / 100) + "毫秒";
+		}
+		console.log("删除消息预计耗时：", timeStr); // 输出删除消息所需的时间
+		console.log("开始删除消息..."); // 输出开始删除消息的提示
+		for (let i = 1; i <= messagesPageCount; i++) { // 遍历所有消息页
+			if (quiet)
+				console.log("正在删除第", i, "页消息..."); // 静默模式下，输出正在删除第i页消息的提示
+			else
+				console.warn("正在删除第", i, "页消息..."); // 输出正在删除第i页消息的提示
+			const messagesData = await getMessagesDataByUserIdAndPage(userId, i); // 获取第i页消息数据
+			await deleteMessagesByData(messagesData); // 删除第i页消息数据
+			console.log("删除第", i, "页消息成功！"); // 输出删除第i页消息成功的提示
+			await sleep(sleep_time); // 等待指定时间后继续下一次删除
+		}
+		console.log("删除用户", userId, "的消息成功！"); // 输出删除用户消息成功的提示
+
+	} catch (error) {
+		console.error("错误：", error); // 捕获并输出错误信息
+	}
+})();
+`;
+			return code;
+		}
+		function copyCode() {
+			const code = getDeleteCode();
+			var clipboard = new ClipboardJS('#copyButton', {
+				text: function () {
+					return code;
+				}
+			});
+			clipboard.on('success', function (e) {
+				alert('代码已复制到剪贴板！');
+				clipboard.destroy();
+			});
+			clipboard.on('error', function (e) {
+				alert('复制失败，请手动复制！');
+				const pre = document.createElement('pre');
+				pre.textContent = code;
+				document.body.appendChild(pre);
+			});
+		}
+	</script>
+	<div id="code"></div>
+</body>
+
+</html>
